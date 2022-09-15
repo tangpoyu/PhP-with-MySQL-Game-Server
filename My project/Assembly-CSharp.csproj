@@ -56,7 +56,11 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\Extensions\Microsoft\Visual Studio Tools for Unity\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\MainPanel.cs" />
+    <Compile Include="Assets\Scripts\SimpleJson.cs" />
     <Compile Include="Assets\Scripts\Web.cs" />
+    <Compile Include="Assets\Scripts\item.cs" />
+    <Compile Include="Assets\Scripts\UserPanel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
