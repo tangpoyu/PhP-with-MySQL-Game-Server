@@ -4,10 +4,15 @@ using UnityEngine;
 
 public class MainPanel : MonoBehaviour
 {
-    [SerializeField] private GameObject itemUI;
+    [SerializeField] private GameObject itemPanel;
 
-    public void OpenItemUI()
+    public void OpenItemPanel()
     {
-        itemUI.SetActive(true);
+        itemPanel.SetActive(true);
+    }
+
+    public void ExitItemPanel()
+    {
+        itemPanel.SetActive(false);
     }
 }

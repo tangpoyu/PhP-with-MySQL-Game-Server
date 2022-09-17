@@ -13,7 +13,8 @@ public class Web : MonoBehaviour
     [SerializeField] private GameObject loginPanel, signPanel, mainPanel, userPanel;
     [SerializeField] private GameObject itemPrefab;
     [SerializeField] private Transform itemContanier;
-    
+
+    private string userId;
 
     // Start is called before the first frame update
     void Start()
@@ -23,6 +24,18 @@ public class Web : MonoBehaviour
 
     public void LoginButton()
     {
+        if (userName.text == "")
+        {
+            Debug.Log("userName inputfield is null");
+            return;
+        }
+
+        if (password.text == "")
+        {
+            Debug.Log("password inputfield is null");
+            return;
+        }
+
         StartCoroutine(Login(userName.text, password.text));
     }
 
@@ -34,7 +47,24 @@ public class Web : MonoBehaviour
 
     public void RigisterButton()
     {
+        if(userNameR.text == "")
+        {
+            Debug.Log("userName inputfield is null");
+            return;
+        }
+
+        if(passwordR.text == "")
+        {
+            Debug.Log("password inputfield is null");
+            return;
+        }
+
         StartCoroutine(Register(userNameR.text, passwordR.text));
+    }
+
+    public void SellItem(string itemId)
+    {
+        StartCoroutine(SellItemCoroutine(itemId));
     }
 
     IEnumerator GetDate()
@@ -73,7 +103,8 @@ public class Web : MonoBehaviour
             {
                 if (Int32.Parse(www.downloadHandler.text) != 0)
                 {
-                    InitializeUI(www.downloadHandler.text);
+                    userId = www.downloadHandler.text;
+                    UpdateUI(www.downloadHandler.text);
                     loginPanel.SetActive(false);
                     mainPanel.SetActive(true);
                 }
@@ -100,15 +131,36 @@ public class Web : MonoBehaviour
             }
             else
             {
-                Debug.Log(www.downloadHandler.text);
-                InitializeUI(userName);
+                switch (www.downloadHandler.text)
+                {
+                    case "-1" :
+                        Debug.Log("Backend error.");
+                        break;
+
+                    case "-2":
+                        Debug.Log("This username is already taken.");
+                        break;
+
+                    default:
+                        Debug.Log($"Build {userName} account.");
+                        UpdateUI(www.downloadHandler.text);
+                        signPanel.SetActive(false);
+                        mainPanel.SetActive(true);
+                        break;
+                }
             }
         };
     }
 
-    private void InitializeUI(string userId)
+    private void UpdateUI(string userId)
     {
+        Debug.Log("Update UI.");
         // GetUserData
+        foreach(Transform transform in itemContanier)
+        {
+            Destroy(transform.gameObject);
+        }
+
         StartCoroutine(GetUserData(userId));
         StartCoroutine(GetUserItem(userId));
     }
@@ -181,14 +233,66 @@ public class Web : MonoBehaviour
             else
             {
                 JSONNode jsonNode = JSON.Parse(request.downloadHandler.text);
+                int imgVer = jsonNode.AsObject["imgVer"].AsInt;
                 string imageUrl = jsonNode.AsObject["imageUrl"];
                 string itemName = jsonNode.AsObject["name"];
                 string coin = jsonNode.AsObject["price"];
                 string description = jsonNode.AsObject["description"];
                 GameObject item = Instantiate(itemPrefab, itemContanier);
-                item.GetComponent<item>().Initialize(itemName, coin, description);
+                item.GetComponent<item>().Initialize(itemId,itemName, coin, description);
+                byte[] imageBytes = ImageProcessor.instance.LoadImage(itemId,imgVer);
+                if(imageBytes == null) StartCoroutine(GetItemIcon(itemId, item, imgVer));
+                else
+                {
+                    Debug.Log("item " + itemId + " icon already has.");
+                    Sprite sprite = ImageProcessor.instance.BytesToSprite(imageBytes);
+                    item.GetComponent<item>().SetImage(sprite);
+                }
             }
 
+        }
+    }
+
+    IEnumerator SellItemCoroutine(string itemId)
+    {
+        WWWForm form = new WWWForm();
+        form.AddField("itemId", itemId);
+        form.AddField("userId", userId);
+
+        using (UnityWebRequest request = UnityWebRequest.Post("http://localhost/UnityBackend/SellItem.php", form))
+        {
+            yield return request.SendWebRequest();
+            if (request.isNetworkError || request.isHttpError)
+            {
+                Debug.Log(request.error);
+            }
+            else
+            {
+                Debug.Log("Sell Sucess.");
+                UpdateUI(userId);
+            }
+        }
+    }
+
+    IEnumerator GetItemIcon(string itemId, GameObject item, int imgVer)
+    {
+        WWWForm form = new WWWForm();
+        form.AddField("itemId", itemId);
+        using(UnityWebRequest request = UnityWebRequest.Post("http://localhost/UnityBackend/GetItemIcon.php", form))
+        {
+            yield return request.SendWebRequest();
+            if (request.isNetworkError || request.isHttpError)
+            {
+                Debug.Log("Download item icon failed : " + request.error + ", itemId :" + itemId);
+            }
+            else
+            {
+                Debug.Log("Download item icon successfully. itemId : " + itemId);
+                byte[] bytes = request.downloadHandler.data;
+                ImageProcessor.instance.SaveImage(itemId, bytes, imgVer);
+                Sprite sprite = ImageProcessor.instance.BytesToSprite(bytes);
+                item.GetComponent<item>().SetImage(sprite);
+            }
         }
     }
 }

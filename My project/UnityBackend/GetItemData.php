@@ -4,7 +4,7 @@ require 'ConnectSetting.php';
 $ItemId = $_POST["itemId"];
 
 
-$sql = $conn -> prepare("SELECT name, description, price, imageUrl FROM item WHERE ID = ?");
+$sql = $conn -> prepare("SELECT name, description, price, imageUrl, imgVer FROM item WHERE ID = ?");
 $sql -> bind_param("i", $ItemId);
 $sql -> execute();
 $result = $sql -> get_result();
