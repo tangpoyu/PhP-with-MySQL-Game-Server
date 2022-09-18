@@ -101,17 +101,27 @@ public class Web : MonoBehaviour
             }
             else
             {
-                if (Int32.Parse(www.downloadHandler.text) != 0)
+                switch (Int32.Parse(www.downloadHandler.text))
                 {
-                    userId = www.downloadHandler.text;
-                    UpdateUI(www.downloadHandler.text);
-                    loginPanel.SetActive(false);
-                    mainPanel.SetActive(true);
-                }
-                else
-                {
-                    Debug.Log("Login failed");
-                }
+                    case -2:
+                        Debug.Log("input of password error.");
+                        break;
+
+                    case -3:
+                        Debug.Log("no username matches.");
+                        break;
+
+                    case -4:
+                        Debug.Log("database error.");
+                        break;
+
+                    default:
+                        userId = www.downloadHandler.text;
+                        UpdateUI(www.downloadHandler.text);
+                        loginPanel.SetActive(false);
+                        mainPanel.SetActive(true);
+                        break;
+                };
             }
         };
     }
